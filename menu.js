@@ -1,107 +1,107 @@
 // ============================================================
-// Ejercicio 03.1 · La ficha del menú — VERSIÓN DE REFERENCIA
-// Los datos son distintos a propósito. Compara la FORMA, no el contenido.
+// Ejercicio 04.1 · El menú vivo — VERSIÓN DE REFERENCIA
 // ============================================================
 
-// ---------- Paso 1 · El producto ----------
-const producto = {
-  id: "p-07",
-  nombre: "Agua de jamaica",
-  precio: 15,
-  categoria: "bebida",
-  disponible: true,
+// ---------- Paso 1 · El arreglo ----------
+const productos = [
+  { id: crypto.randomUUID(), nombre: "Molletes",        precio: 30, categoria: "comida", disponible: true  },
+  { id: crypto.randomUUID(), nombre: "Jugo de naranja", precio: 18, categoria: "bebida", disponible: true  },
+  { id: crypto.randomUUID(), nombre: "Gelatina",        precio: 12, categoria: "postre", disponible: false }
+];
 
-  // ---------- Paso 3 · Métodos ----------
-  resumen() {
-    return this.nombre + " — $" + this.precio + " (" + this.categoria + ")";
-  },
-  estaDisponible() {
-    return this.disponible;
-  }
-};
+// ---------- Pasos 2 y 3 · Leer ----------
+const listar = () => productos;
 
-console.log("--- Paso 1 ---");
-console.log(producto);
+const listarDisponibles = () => productos.filter((p) => p.disponible);
 
-// ---------- Paso 2 · Tres formas de leer ----------
-console.log("--- Paso 2 ---");
-const campo = "nombre";
-console.log(producto.nombre);
-console.log(producto["nombre"]);
-console.log(producto[campo]);
+// ---------- Paso 4 · Buscar uno ----------
+const obtenerPorId = (id) => productos.find((p) => p.id === id);
 
-console.log("--- Paso 3 ---");
-console.log(producto.resumen());
-console.log(producto.estaDisponible());
+// obtenerPorId("no-existe") devuelve undefined: find no encontró nada.
+// console.log(obtenerPorId("no-existe").nombre);
+//   → TypeError: Cannot read properties of undefined (reading 'nombre')
+//   El programa se CAE. Por eso, después de cada find, hay que revisar
+//   si encontró algo antes de usar el resultado. En la semana 5 esto
+//   se convierte en un error 404 bien manejado.
 
-// ---------- Paso 4 · El usuario ----------
-const usuario = {
-  id: "u-03",
-  nombre: "Luis Ángel",
-  correo: "luis@cbtis.edu.mx",
-  rol: "alumno"
-};
+// ---------- Paso 5 · Crear ----------
+function crear(datos) {
+  const nuevo = { id: crypto.randomUUID(), disponible: true, ...datos };
+  productos.push(nuevo);
+  return nuevo;
+}
 
-// ---------- Paso 5 · El pedido anidado ----------
+// ---------- Paso 6 · Actualizar ----------
+function actualizar(id, cambios) {
+  const i = productos.findIndex((p) => p.id === id);
+  if (i === -1) return null;
+  productos[i] = { ...productos[i], ...cambios };
+  return productos[i];
+}
+
+// ---------- Paso 7 · Borrado lógico ----------
+function eliminar(id) {
+  const producto = obtenerPorId(id);
+  if (!producto) return null;
+  producto.disponible = false;
+  return producto;
+}
+// Razón: los pedidos viejos guardan el id de su producto. Si lo borro de
+// verdad, el historial queda apuntando a algo que ya no existe y el corte
+// del día se rompe. Marcarlo como no disponible lo saca del menú sin
+// destruir la información, y además se puede revertir.
+
+// ---------- Paso 8 · Total con reduce ----------
+function calcularTotal(pedido) {
+  return pedido.items.reduce((suma, item) => suma + item.precio * item.cantidad, 0);
+}
+
+// ---------- Paso 9 · ¿Ya existe? ----------
+const existeNombre = (nombre) =>
+  productos.some((p) => p.nombre.toLowerCase() === nombre.toLowerCase());
+
+// ---------- Reto opcional ----------
+const buscarPorTexto = (texto) =>
+  productos.filter((p) => p.nombre.toLowerCase().includes(texto.toLowerCase()));
+
+// ============================================================
+// Paso 10 · Pruebas
+// ============================================================
+
+console.log("--- listar ---");
+console.log(listar());
+
+console.log("--- listarDisponibles ---");
+console.log(listarDisponibles().map((p) => p.nombre));
+
+console.log("--- crear ---");
+const creado = crear({ nombre: "Sincronizada", precio: 32, categoria: "comida" });
+console.log(creado);
+
+console.log("--- obtenerPorId ---");
+console.log(obtenerPorId(creado.id).nombre);
+console.log(obtenerPorId("no-existe"));
+
+console.log("--- actualizar ---");
+console.log(actualizar(creado.id, { precio: 35 }));
+console.log(actualizar("no-existe", { precio: 1 }));
+
+console.log("--- eliminar (lógico) ---");
+console.log(eliminar(creado.id).disponible);
+console.log("disponibles ahora:", listarDisponibles().length);
+
+console.log("--- calcularTotal ---");
 const pedido = {
-  folio: "PR-0118",
-  cliente: usuario,
-  producto: producto,
-  cantidad: 3,
-  estado: "pendiente"
+  folio: "PR-0341",
+  items: [
+    { nombre: "Molletes", precio: 30, cantidad: 2 },
+    { nombre: "Jugo",     precio: 18, cantidad: 1 }
+  ]
 };
+console.log(calcularTotal(pedido));
 
-console.log("--- Paso 5 ---");
-console.log(pedido.cliente.nombre);
-console.log(pedido.producto.precio);
-console.log(pedido.cliente.telefono);
-// Imprimió "undefined" porque la clave telefono no existe en el objeto usuario.
-// Lo importante: NO truena. El programa sigue corriendo con un undefined adentro.
+console.log("--- existeNombre ---");
+console.log(existeNombre("gelatina"), existeNombre("pizza"));
 
-// ---------- Paso 6 · Desestructuración ----------
-console.log("--- Paso 6 ---");
-const { nombre, precio } = producto;
-console.log(nombre, precio);
-
-const { cantidad, nota = "sin nota" } = pedido;
-console.log(cantidad, nota);
-
-// ---------- Paso 7 · El total ----------
-const total = producto.precio * pedido.cantidad;
-pedido.total = total;
-
-console.log("--- Paso 7 ---");
-console.log(pedido);
-
-// ---------- Paso 8 · Copiar ----------
-console.log("--- Paso 8 ---");
-const copiaMala = producto;
-copiaMala.precio = 999;
-console.log(producto.precio);
-// Imprimió 999: copiaMala y producto apuntan AL MISMO objeto.
-// La variable no guarda el objeto, guarda dónde está.
-
-producto.precio = 15; // lo dejamos como estaba
-
-const copiaBuena = { ...producto };
-copiaBuena.precio = 999;
-console.log(producto.precio); // 15 — el original quedó intacto
-
-// ---------- Paso 9 · El contrato ----------
-console.log("--- Paso 9 ---");
-
-const respuestaOk = {
-  ok: true,
-  data: pedido
-};
-
-const respuestaError = {
-  ok: false,
-  error: {
-    mensaje: "El producto no está disponible",
-    detalles: []
-  }
-};
-
-console.log(respuestaOk);
-console.log(respuestaError);
+console.log("--- buscarPorTexto ---");
+console.log(buscarPorTexto("ju").map((p) => p.nombre));
